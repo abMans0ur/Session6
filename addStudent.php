@@ -1,70 +1,99 @@
 <?php
 include './conn.php';
-$update = false;
-if (isset($_GET['studentId'])) {
-    $id = $_GET['studentId'];
-    $update = true;
-    $selectData = "SELECT * FROM`students`WHERE `id`=$id";
-    $studentData = mysqli_fetch_assoc(mysqli_query($conn, $selectData));
-    // print_r($studentData);
-}
+if (isset($_SESSION['name'])) {
+
+    $update = false;
+    if (isset($_GET['studentId'])) {
+        $id = $_GET['studentId'];
+        $update = true;
+        $selectData = "SELECT * FROM`students`WHERE `id`=$id";
+        $studentData = mysqli_fetch_assoc(mysqli_query($conn, $selectData));
+        // print_r($studentData);
+    }
 ?>
-<!DOCTYPE html>
-<html lang="en">
+    <!DOCTYPE html>
+    <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Student</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add Student</title>
+    </head>
 
-<body>
-    <form action="" method="post">
-        <input type="text" name="username" value="<?php if ($update) echo $studentData['name'] ?>" placeholder="UserName" required>
-        <input type="email" name="email" placeholder="email" value="<?php if ($update) echo $studentData['email'] ?>" required>
-        <select name="course" id="">
+    <body>
+    <?php  include './header.php'; ?>
+        <a href="./index.php">BACK to HOME</a>
+        <form action="" method="post">
+            <input type="text" name="username" value="<?php if ($update) echo $studentData['name'] ?>" placeholder="UserName" required>
+            <input type="email" name="email" placeholder="email" value="<?php if ($update) echo $studentData['email'] ?>" required>
+            <select name="course" id="">
+                <?php
+                $selectCourses = "SELECT * FROM `courses`";
+                $runCourses = mysqli_query($conn, $selectCourses);
+                foreach ($runCourses as $data) :
+                ?>
+                    <option value="<?php echo $data['id']  ?>" <?php if ($update) {
+                                                                    if ($data['id'] == $studentData['course_id']) {
+                                                                        echo "SELECTED";
+                                                                    }
+                                                                }  ?>><?php echo $data['name'] ?></option>
+                <?php
+                endforeach;
+                ?>
+            </select>
             <?php
-            $selectCourses = "SELECT * FROM `courses`";
-            $runCourses = mysqli_query($conn, $selectCourses);
-            foreach ($runCourses as $data) :
+            if ($update) {
             ?>
-                <option value="<?php echo $data['id']  ?>" <?php if ($update) {
-                                                                if ($data['id'] == $studentData['course_id']) {
-                                                                    echo "SELECTED";
-                                                                }
-                                                            }  ?>><?php echo $data['name'] ?></option>
+                <button type="submit" name="updateBtn">Update</button>
             <?php
-            endforeach;
+            } else {
             ?>
-        </select>
-        <?php
-        if ($update) {
-        ?>
-            <button type="submit" name="updateBtn">Update</button>
-        <?php
-        } else {
-        ?>
-            <button type="submit" name="addBtn">Add</button>
-        <?php } ?>
-    </form>
-</body>
+                <button type="submit" name="addBtn">Add</button>
+            <?php } ?>
+        </form>
+        <?php include './footer.php';  ?>
+    </body>
 
-</html>
+    </html>
 <?php
-if (isset($_POST['addBtn']) || isset($_POST['updateBtn'])) {
-    $name = $_POST['username'];
-    $email = $_POST['email'];
-    $courseId = $_POST['course'];
-    if ($update) {
-        $sql = "UPDATE `students` SET `name`='$name' , `email`='$email' ,`course_id`=$courseId WHERE `id`=$id ";
-    } else {
-        $sql = "INSERT INTO `students`(`name`,`email`,`course_id`)VALUES('$name','$email',$courseId)";
+    if (isset($_POST['addBtn']) || isset($_POST['updateBtn'])) {
+        $name = $_POST['username'];
+        if (empty($name)) {
+            array_push($error, "Name is Needed");
+        }
+        $email = $_POST['email'];
+        if (empty($email)) {
+            array_push($error, "Email is Needed");
+        }
+        $courseId = $_POST['course'];
+        $checkMail = "SELECT *FROM `students`WHERE `email`='$email'";
+        if ($update) {
+            $checkMail .= " AND `id`!=$id";
+        }
+        $runCheck = mysqli_query($conn, $checkMail);
+        $mailCounter = mysqli_num_rows($runCheck);
+        if ($mailCounter > 0) {
+            array_push($error, "THIS EMAIL ALREADY EXISTS!!!!");
+        }
+        if (empty($error)) {
+            if ($update) {
+                $sql = "UPDATE `students` SET `name`='$name' , `email`='$email' ,`course_id`=$courseId WHERE `id`=$id ";
+            } else {
+                $sql = "INSERT INTO `students`(`name`,`email`,`course_id`)VALUES('$name','$email',$courseId)";
+            }
+            $runSql = mysqli_query($conn, $sql);
+            if ($runSql) {
+                echo "Added";
+                header('location:index.php');
+            } else {
+                echo "ERROR!!! " . mysqli_error($conn);
+            }
+        } else {
+            foreach ($error as $row) {
+                echo "<h1>$row</h1><br>";
+            }
+        }
     }
-    $runSql = mysqli_query($conn, $sql);
-    if ($runSql) {
-        echo "Added";
-        header('location:index.php');
-    } else {
-        echo "ERROR!!! " . mysqli_error($conn);
-    }
+} else {
+    header('location:register.php');
 }
