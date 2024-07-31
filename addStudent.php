@@ -24,11 +24,15 @@ if (isset($_GET['studentId'])) {
         <input type="email" name="email" placeholder="email" value="<?php if ($update) echo $studentData['email'] ?>" required>
         <select name="course" id="">
             <?php
-            $selectCourses="SELECT * FROM `courses`";
-            $runCourses=mysqli_query($conn,$selectCourses);
-            foreach($runCourses as $data):
+            $selectCourses = "SELECT * FROM `courses`";
+            $runCourses = mysqli_query($conn, $selectCourses);
+            foreach ($runCourses as $data) :
             ?>
-            <option value="<?php echo$data['id']  ?>" <?php if($update){if($data['id']==$studentData['course_id']){echo"SELECTED";} }  ?>  ><?php  echo$data['name'] ?></option>
+                <option value="<?php echo $data['id']  ?>" <?php if ($update) {
+                                                                if ($data['id'] == $studentData['course_id']) {
+                                                                    echo "SELECTED";
+                                                                }
+                                                            }  ?>><?php echo $data['name'] ?></option>
             <?php
             endforeach;
             ?>
@@ -52,7 +56,7 @@ if (isset($_POST['addBtn']) || isset($_POST['updateBtn'])) {
     $email = $_POST['email'];
     $courseId = $_POST['course'];
     if ($update) {
-        $sql="UPDATE `students` SET `name`='$name' , `email`='$email' ,`course_id`=$courseId WHERE `id`=$id ";
+        $sql = "UPDATE `students` SET `name`='$name' , `email`='$email' ,`course_id`=$courseId WHERE `id`=$id ";
     } else {
         $sql = "INSERT INTO `students`(`name`,`email`,`course_id`)VALUES('$name','$email',$courseId)";
     }
